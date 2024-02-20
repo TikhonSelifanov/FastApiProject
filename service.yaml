@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-deployment
+  labels:
+    app: service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service
+  template:
+    metadata:
+      labels:
+        app: service
+    spec:
+      containers:
+      - name: service
+        image: tikhonselifanov/python_service:v1.0
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+        env:
+          - name: USER_NAME
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secret
+                key: mongo-password
+          - name: USER_PWD
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secret
+                key: mongo-password
+          - name: DB_URL
+            valueFrom:
+              configMapKeyRef:
+                name: mongo-config
+                key: mongo-url
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-service
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: service
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+      nodePort: 30100
